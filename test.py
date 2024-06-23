@@ -37,17 +37,8 @@ def test_threading():
     print(end-start)
 
 if __name__ == "__main__":
-    ##test_time_save()
-    #est_threading()
+    #test_time_save()
+    #test_threading()
     #s = input()
     #print(s)
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-
-
-    # Plot something on the first subplot
-    ax1.plot([1, 2, 3], [4, 5, 6])
-
-    # Close the second subplot
-
-    # Show the figure
-    plt.show()
+    print("hello!")

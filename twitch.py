@@ -19,6 +19,7 @@ regex = r'^:([^!]+)!.*:(.*)$'
 cash_lock = threading.Lock()
 instruction_lock = threading.Lock()
 current_stocks_lock = threading.Lock()
+#Global run switch allows for concurrency
 run_switch = 1
 
 def total_stock_value():
@@ -70,6 +71,7 @@ def sell(stock_code):
         print("sell finished")
     return
 
+# Threads end when the function returns
 def fill_instructions():
     global run_switch
     while run_switch:
@@ -148,7 +150,7 @@ if __name__ == "__main__":
         #print("hello")
         s = input()
         if s == "start":
-            # the daemon argument lets these threads automatically exit when we quit from this
+            # the daemon argument lets these threads automatically exit when we leave main
             twitch_thread = threading.Thread(target=connect_to_chat, daemon=True)
             instr_thread = threading.Thread(target=fill_instructions, daemon=True)
             stock_value_thread = threading.Thread(target=total_stock_value, daemon=True)
