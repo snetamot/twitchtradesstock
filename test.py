@@ -36,9 +36,8 @@ def test_threading():
     end = time.time()
     print(end-start)
 
-
 if __name__ == "__main__":
-    #test_time_save()
+    ##test_time_save()
     test_threading()
-    # x = datetime.datetime.now()
-    # print(x)
+    #s = input()
+    #print(s)
