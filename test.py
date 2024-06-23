@@ -2,7 +2,7 @@ from google import real_time_price
 from googlenothreads import real_time_price_no_threads
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
+import matplotlib.pyplot as plt
 
 # This test is for testing the runtime when trying to find the value of a stock price when using multiple possible urls
 def test_time_save():
@@ -38,6 +38,16 @@ def test_threading():
 
 if __name__ == "__main__":
     ##test_time_save()
-    test_threading()
+    #est_threading()
     #s = input()
     #print(s)
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+
+
+    # Plot something on the first subplot
+    ax1.plot([1, 2, 3], [4, 5, 6])
+
+    # Close the second subplot
+
+    # Show the figure
+    plt.show()

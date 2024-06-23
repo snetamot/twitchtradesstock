@@ -3,12 +3,14 @@
 import socket
 import re
 from google import real_time_price
+from codes import get_current_codes
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
 instr_queue = []
 current_stocks = {}
+nyse_and_nasdaq = {}
 liquid_cash = 10000.00
 cash_in_stocks = 0.00
 commands = ["!buy", "!sell"]
@@ -30,7 +32,7 @@ def total_stock_value():
             for future in as_completed(future_to_total):
                 total += current_stocks[future_to_total[future]]*future.result()
         current_stocks_lock.release()
-        print(f'Current total in account:{total}\n')
+        print(f'Current total in account: {total}\n')
         cash_in_stocks = total
         time.sleep(15)
 
@@ -127,7 +129,7 @@ def connect_to_chat():
                 instr = chatter_message.split()
                 instr = instr[0:2]
                 # check if message is !buy or !sell and add to queue of instructions
-                if instr[0] in commands and instr[1].isupper():
+                if instr[0] in commands and nyse_and_nasdaq[instr[1]]:
                     instruction_lock.acquire()
                     instr_queue.append(instr)
                     instruction_lock.release()
@@ -137,7 +139,11 @@ def connect_to_chat():
 
 
 if __name__ == "__main__":
-
+    with open('NYSE&NASDAQ.txt', 'r') as code_file:
+        for code in code_file.read():
+            nyse_and_nasdaq[code] = 1
+    code_file.close()
+    print('All NYSE and NASDAQ stocks updated!')
     while run_switch:
         #print("hello")
         s = input()
@@ -155,4 +161,4 @@ if __name__ == "__main__":
             run_switch = 0
             print("Exiting...")
             break
-    quit(1)
+    quit()
