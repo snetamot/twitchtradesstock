@@ -1,12 +1,16 @@
 # Connect to twitch chat
 # IRC bot reads all messages
-import socket
-import re
-from google import real_time_price
-from codes import get_current_codes
-import threading
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from codes import get_current_codes
+from google import real_time_price
+from matplotlib import animation
+import matplotlib.pyplot as plt
+import threading
+import socket
+import graph
 import time
+import re
 
 instr_queue = []
 current_stocks = {}
@@ -68,7 +72,6 @@ def sell(stock_code):
         liquid_cash += price
         current_stocks_lock.release()
         cash_lock.release()
-        print("sell finished")
     return
 
 # Threads end when the function returns
@@ -130,23 +133,30 @@ def connect_to_chat():
                 # print(f"{chatter_username}: {chatter_message}")
                 instr = chatter_message.split()
                 instr = instr[0:2]
+                #print(instr)
                 # check if message is !buy or !sell and add to queue of instructions
-                if instr[0] in commands and nyse_and_nasdaq[instr[1]]:
-                    instruction_lock.acquire()
-                    instr_queue.append(instr)
-                    instruction_lock.release()
-                    #print(instr_queue)
+                try:
+                    if instr[0] in commands and nyse_and_nasdaq[instr[1]]:
+                        instruction_lock.acquire()
+                        instr_queue.append(instr)
+                        instruction_lock.release()
+                        #print(instr_queue)
+                except KeyError:
+                    pass
             except AttributeError:
                 print("Initial connection messages")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     get_current_codes()
     with open('NYSE&NASDAQ.txt', 'r') as code_file:
-        for code in code_file.read():
+        for code in code_file.readlines():
+            code = code.strip()
             nyse_and_nasdaq[code] = 1
     code_file.close()
+    print(nyse_and_nasdaq)
     print('All NYSE and NASDAQ stocks updated!')
+
     while run_switch:
         #print("hello")
         s = input()
@@ -156,9 +166,7 @@ if __name__ == "__main__":
             instr_thread = threading.Thread(target=fill_instructions, daemon=True)
             stock_value_thread = threading.Thread(target=total_stock_value, daemon=True)
             twitch_thread.start()
-            time.sleep(1)
             instr_thread.start()
-            time.sleep(1)
             stock_value_thread.start()
         elif s == "quit":
             run_switch = 0
