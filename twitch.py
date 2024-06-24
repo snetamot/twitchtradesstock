@@ -141,6 +141,7 @@ def connect_to_chat():
 
 
 if __name__ == "__main__":
+    get_current_codes()
     with open('NYSE&NASDAQ.txt', 'r') as code_file:
         for code in code_file.read():
             nyse_and_nasdaq[code] = 1

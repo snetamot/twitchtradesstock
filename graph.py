@@ -2,59 +2,74 @@
 # the current stocks in inventory and the overall value of
 # the account
 
-from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.animation as animation
-from matplotlib.gridspec import GridSpec
-import matplotlib.ticker as mticker
 from google import real_time_price
 import matplotlib.pyplot as plt
-import pandas as pd
 import threading
 import twitch
 import time
-import math
-import csv
-import os
 
 
 stock = ['NVDA', 'MSFT', 'AAPL', 'GOOGL']
-
-fieldnames = ['x_val', 'price']
-
 start_prices = {}
+
+#Dictionary of dictionaries
+stock_data = {code: {'x_val': [], 'price': []} for code in stock}
+
+cash_data = {"liquid": {"x_val": [], 'amount': []}, "stock": {"x_val": [], "amount": []}}
+
+def store_stock_cash_data():
+    x = 0
+    while True:
+        cash_data["stock"]["x_val"].append(x)
+        cash_data["stock"]["amount"].append(twitch.cash_in_stocks)
+        x += 1
+        time.sleep(1)
+
+def store_liquid_cash_data():
+    x = 0
+    while True:
+        cash_data["liquid"]["x_val"].append(x)
+        cash_data["liquid"]["amount"].append(twitch.liquid_cash)
+        x += 1
+        time.sleep(1)
+
+def animate_cash(i, ax):
+    x1 = cash_data["liquid"]["x_val"]
+    y1 = cash_data["liquid"]["amount"]
+
+    x2 = cash_data["stock"]["x_val"]
+    y2 = cash_data["stock"]["amount"]
+    ax.cla()
+    ax.plot(x1, y1, color='cyan')
+    ax.plot(x2, y2, color='purple')
+    ax.text(.05, .45, f'Cash in liquid: ${twitch.liquid_cash}\nCash in stocks: ${twitch.cash_in_stocks}'
+            , transform=ax.transAxes, fontsize=10)
+    ax.get_xaxis().set_ticks([])
+    ax.get_yaxis().set_ticks([])
 
 
 def store_stock_data(stock_code):
     x = 0
-    with open(f'{stock_code}.csv', 'w') as csv_file_head:
-        csv_writer = csv.DictWriter(csv_file_head, fieldnames=fieldnames)
-        csv_writer.writeheader()
-        csv_file_head.close()
-        while 1:
-            with open(f'{stock_code}.csv', 'a') as csv_file_append:
-                #open the csv in append mode
-                csv_writer = csv.DictWriter(csv_file_append, fieldnames=fieldnames)
-                info = {
-                    'x_val': x,
-                    'price': real_time_price(stock_code)
-                }
-                #print(info)
-                csv_writer.writerow(info)
-                x += 1
+    while True:
+        price = real_time_price(stock_code)
+        stock_data[stock_code]['x_val'].append(x)
+        stock_data[stock_code]['price'].append(price)
+        x += 1
+        time.sleep(1)
 
 def animate_stock(i, stock_code, ax):
-    data = pd.read_csv(f'{stock_code}.csv')
-    x = data['x_val']
-    y = data['price']
-
+    x = stock_data[stock_code]['x_val']
+    y = stock_data[stock_code]['price']
+    #clear
     ax.cla()
-    price = real_time_price(stock_code)
+    price = y[-1]
     if start_prices[stock_code] <= price:
         ax.plot(x, y, color='red')
     else:
         ax.plot(x, y, color='limegreen')
 
-    ax.text(0.05, 0.75, f'{stock_code}: \\${price}', transform=ax.transAxes, fontsize=10)
+    ax.text(0.05, 0.75, f'{stock_code}: ${price}', transform=ax.transAxes, fontsize=10)
     ax.get_xaxis().set_ticks([])
     ax.get_yaxis().set_ticks([])
 
@@ -117,6 +132,15 @@ if __name__ == '__main__':
     ani_googl = animation.FuncAnimation(fig, animate_stock, fargs=(f'GOOGL', ax5), frames=100
                                         , interval=1000, cache_frame_data=True)
 
+    liquid_cash_thread = threading.Thread(target=store_liquid_cash_data, daemon=True)
+    liquid_cash_thread.start()
+
+    stock_cash_thread = threading.Thread(target=store_stock_cash_data, daemon=True)
+    stock_cash_thread.start()
+
+    ani_total_cash = animation.FuncAnimation(fig, animate_cash, fargs=(ax1,), frames=100
+                                             , interval=1000, cache_frame_data=True)
+
     time.sleep(1)
     plt.show()
 
@@ -124,3 +148,5 @@ if __name__ == '__main__':
     msft_thread.join()
     aapl_thread.join()
     googl_thread.join()
+    liquid_cash_thread.join()
+    stock_cash_thread.join()
